@@ -32,7 +32,7 @@ class Transmitter:
         self.logger.debug("Reading CHUNK from audio file")
         data = wf.readframes(CHUNK)
 
-        while data != '':
+        while len(data) != 0:
             self.logger.debug("Read data of len: %d", len(data))
             self.mw.send(data)
             self.logger.debug("Reading CHUNK from audio file")
