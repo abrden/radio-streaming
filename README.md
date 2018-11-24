@@ -7,9 +7,9 @@ pip3 install zmq pyaudio
 
 Open a console in the radio-streaming dir and run
 ```
-$ python3 -m transmitter
+$ python3 -m transmitter AR 100 glitch-mob.wav
 ```
-open another console in the radio-streaming dir and run
+Open another console in the radio-streaming dir and run
 ```
-$ python3 -m receiver
+$ python3 -m receiver AR 100
 ```
