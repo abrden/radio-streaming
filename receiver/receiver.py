@@ -29,7 +29,6 @@ class Receiver:
     def start(self):
         self.logger.debug("Receiving data from transmitter")
         data = self.mw.receive()
-
         while data != b"END":
             self.logger.debug("Received data of len: %d. Writing data to stream", len(data))
             self.stream.write(data)
