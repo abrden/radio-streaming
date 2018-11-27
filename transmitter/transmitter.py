@@ -32,11 +32,20 @@ class Transmitter:
         self.logger.debug("Reading CHUNK from audio file")
         data = wf.readframes(CHUNK)
 
+        i = 0
         while len(data) != 0:
             self.logger.debug("Read data of len: %d", len(data))
             self.mw.send(data)
+
+            # FIXME Ask why this is needed
+            i += 1
+            import time
+            if i % 100 == 0:
+                time.sleep(2)
+
             self.logger.debug("Reading CHUNK from audio file")
             data = wf.readframes(CHUNK)
+        self.logger.debug("CHUNKS %d", i)
 
         self.logger.debug("Closing audio file")
         wf.close()

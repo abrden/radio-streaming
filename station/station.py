@@ -1,7 +1,7 @@
 import logging
-import wave
 
-from .middleware3 import StationMiddleware
+from .middleware import StationMiddleware
+
 
 class Station:
     def __init__(self):
