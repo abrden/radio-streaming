@@ -21,14 +21,6 @@ class Transmitter:
         self.logger.debug("Opening audio file")
         wf = wave.open(self.audio_file_path, 'rb')
 
-        self.logger.debug("Sending wave info")
-        sampwidth = wf.getsampwidth()
-        self.mw.send_int(sampwidth)
-        channels = wf.getnchannels()
-        self.mw.send_int(channels)
-        rate = wf.getframerate()
-        self.mw.send_int(rate)
-
         self.logger.debug("Reading CHUNK from audio file")
         data = wf.readframes(CHUNK)
 

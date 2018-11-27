@@ -16,10 +16,6 @@ class ReceiverMiddleware:
         [topic, data] = self.socket.recv_multipart()
         return data
 
-    def receive_int(self):
-        [topic, data] = self.socket.recv_multipart()
-        return int(data.decode())
-
     def close(self):
         self.socket.close()
         # TODO Terminate context
