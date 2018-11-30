@@ -21,6 +21,7 @@ class Heartbeat(Process):
             try:
                 self.logger.info("Sending heartbeat")
                 socket.send_string("lubdub")
+                socket.send_string("lubdub")
                 time.sleep(5)
             except KeyboardInterrupt:
                 break
