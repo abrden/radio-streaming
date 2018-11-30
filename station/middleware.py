@@ -1,31 +1,8 @@
-from multiprocessing import Process
 import logging
-import time
 
 import zmq
 
-
-class Heartbeat(Process):
-    def __init__(self):
-        super(Heartbeat, self).__init__()
-        self.logger = logging.getLogger("Heartbeat")
-
-    def run(self):
-        context = zmq.Context()
-        socket = context.socket(zmq.PUSH)
-        socket.setsockopt(zmq.LINGER, -1)
-        socket.bind("tcp://*:6002")
-
-        self.logger.info("Starting to send heartbeats")
-        while True:
-            try:
-                self.logger.info("Sending heartbeat")
-                socket.send_string("lubdub")
-                socket.send_string("lubdub")
-                time.sleep(5)
-            except KeyboardInterrupt:
-                break
-        self.logger.info("End to heartbeats")
+from .heartbeat import Heartbeat
 
 
 class StationMiddleware:
