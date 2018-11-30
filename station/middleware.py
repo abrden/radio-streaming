@@ -1,4 +1,4 @@
-from multiprocessing import Process, Value
+from multiprocessing import Process
 import logging
 import time
 
