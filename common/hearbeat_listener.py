@@ -12,32 +12,21 @@ class HeartbeatListener(Process):
         self.dead_fun = dead_fun
 
         self.host = host
-        self.socket = None
-
-    def connect(self, host):
-        context = zmq.Context()
-        self.socket = context.socket(zmq.PULL)
-        self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.setsockopt(zmq.RCVTIMEO, 10000)
-        self.socket.connect("tcp://0.0.0.0:6002")
-
-    def reconnect(self, host):
-        self.socket.close()
-        self.connect(host)
+        self.mw = HeartbeatListenerMiddleware()
 
     def run(self):
-        self.connect(self.host)
+        self.mw.connect(self.host)
 
         self.logger.info("Start receiving heartbeats")
         while not self.quit.value:
-            try:
-                self.logger.info("Receiving")
-                beat = self.socket.recv()
+            self.logger.info("Receiving")
+            beat = self.mw.receive_heartbeat()
+            if beat:
                 self.logger.info("Station heartbeat received: %r", beat)
-            except zmq.error.Again:
+            else:
                 self.logger.info("Station is dead. Finding new station's address and reconnecting")
                 host = self.dead_fun()
-                self.reconnect(host)
+                self.mw.reconnect(host)
         self.logger.info("End to heartbeats listening")
 
     def close(self):
@@ -45,17 +34,16 @@ class HeartbeatListener(Process):
         self.quit.value = 1
 
 
-class HeartbeatListenerMiddleware: # Unused
-    def __init__(self, host):
+class HeartbeatListenerMiddleware:
+    def __init__(self):
         self.logger = logging.getLogger("HeartbeatListenerMiddleware")
         self.socket = None
-        self.connect(host)
 
     def connect(self, host):
         context = zmq.Context()
         self.socket = context.socket(zmq.PULL)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.setsockopt(zmq.RCVTIMEO, 1000)
+        self.socket.setsockopt(zmq.RCVTIMEO, 10000)
         self.socket.connect(host)
 
     def reconnect(self, host):
@@ -63,5 +51,9 @@ class HeartbeatListenerMiddleware: # Unused
         self.connect(host)
 
     def receive_heartbeat(self):
-        self.logger.info("Receiving")
-        return self.socket.recv()
+        try:
+            self.logger.debug("Receiving heartbeat")
+            return self.socket.recv()
+        except zmq.error.Again:
+            self.logger.debug("Heartbeat listener timeout")
+            return None
