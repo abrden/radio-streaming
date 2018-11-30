@@ -21,7 +21,6 @@ class Receiver:
 
         self.logger.debug("Setting up audio stream")
         self.p = pyaudio.PyAudio()
-        self.logger.debug("Creating stream")
         self.stream = self.p.open(format=self.p.get_format_from_width(SAMPWIDTH),
                                   channels=CHANNELS,
                                   rate=RATE,
@@ -36,12 +35,10 @@ class Receiver:
             self.logger.debug("Receiving data from transmitter")
             data = self.mw.receive()
 
-        self.logger.debug("Closing connection")
-        self.mw.close()
-
         self.logger.debug("Closing audio stream")
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
 
-
+        self.logger.debug("Closing connection")
+        self.mw.close()

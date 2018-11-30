@@ -34,6 +34,8 @@ class Transmitter:
             import time
             if i % 100 == 0:
                 time.sleep(2)
+            if i % 1000 == 0:  # FIXME hacemela corta gato
+                break
 
             self.logger.debug("Reading CHUNK from audio file")
             data = wf.readframes(CHUNK)

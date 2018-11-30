@@ -16,7 +16,7 @@ class TransmitterMiddleware:
 
     def send(self, audio_chunk):
         topic = self.country + self.freq
-        self.socket.send_multipart([bytes(topic,'utf-8'),audio_chunk])
+        self.socket.send_multipart([bytes(topic, 'utf-8'), audio_chunk])
 
     def close(self):
         self.send(b"END")

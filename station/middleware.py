@@ -1,5 +1,30 @@
+from multiprocessing import Process, Value
+import logging
+import time
+
 import zmq
-import logging 
+
+
+class Heartbeat(Process):
+    def __init__(self):
+        super(Heartbeat, self).__init__()
+        self.logger = logging.getLogger("Heartbeat")
+
+    def run(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.PUSH)
+        socket.setsockopt(zmq.LINGER, -1)
+        socket.bind("tcp://*:6002")
+
+        self.logger.info("Starting to send heartbeats")
+        while True:
+            try:
+                self.logger.info("Sending heartbeat")
+                socket.send_string("lubdub")
+                time.sleep(5)
+            except KeyboardInterrupt:
+                break
+        self.logger.info("End to heartbeats")
 
 
 class StationMiddleware:
@@ -17,22 +42,28 @@ class StationMiddleware:
         self.backend.setsockopt(zmq.LINGER, -1)
         self.backend.bind("tcp://*:6001")
 
-        poller = zmq.Poller()
-        poller.register(self.frontend, zmq.POLLIN)
-        poller.register(self.backend, zmq.POLLIN)
-        
+        self.poller = zmq.Poller()
+        self.poller.register(self.frontend, zmq.POLLIN)
+        self.poller.register(self.backend, zmq.POLLIN)
+
+        self.logger.info("Starting Heartbeat")
+        self.heartbeat = Heartbeat()
+        self.heartbeat.start()
+
+    def start(self):
         while True:  # TODO Graceful quit
-            events = dict(poller.poll(1000))
+            events = dict(self.poller.poll(1000))
             if self.frontend in events:
                 message = self.frontend.recv_multipart()
-                self.logger.info("[XSUB] Message arrived: %r", message)
+                self.logger.info("[XSUB] Message arrived")
                 self.backend.send_multipart(message)
             if self.backend in events:
                 message = self.backend.recv_multipart()
-                self.logger.info("[XPUB] Message arrived: %r", message)
+                self.logger.info("[XPUB] Message arrived")
                 self.frontend.send_multipart(message)
 
     def close(self):
         self.frontend.close()
         self.backend.close()
-        # TODO Proper closure        
+        # TODO Terminate context
+        self.heartbeat.join()
