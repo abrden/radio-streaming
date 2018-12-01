@@ -1,0 +1,25 @@
+version: "3"
+services:
+
+  station1:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=1
+      - STATIONS_TOTAL=2
+
+  station2:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=2
+      - STATIONS_TOTAL=2
+
+networks:
+  stations:
