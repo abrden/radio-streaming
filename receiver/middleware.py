@@ -3,17 +3,18 @@ import zmq
 
 class ReceiverMiddleware:
     def __init__(self, country, freq):
-        # TODO Do things with country and freq
+        self.country = country
+        self.freq = freq
         context = zmq.Context()
-        self.socket = context.socket(zmq.PULL)
+        self.socket = context.socket(zmq.SUB)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.connect("tcp://0.0.0.0:5000")
+        topic = self.country + self.freq
+        self.socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+        self.socket.connect("tcp://0.0.0.0:6001")
 
     def receive(self):
-        return self.socket.recv()
-
-    def receive_int(self):
-        return int(self.socket.recv().decode())
+        [topic, data] = self.socket.recv_multipart()
+        return data
 
     def close(self):
         self.socket.close()

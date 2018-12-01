@@ -4,6 +4,11 @@ import pyaudio
 from .middleware import ReceiverMiddleware
 
 
+RATE = 44100
+CHANNELS = 2
+SAMPWIDTH = 2
+
+
 class Receiver:
     def __init__(self, country, freq):
         self.logger = logging.getLogger("Receiver")
@@ -16,20 +21,15 @@ class Receiver:
 
         self.logger.debug("Setting up audio stream")
         self.p = pyaudio.PyAudio()
-        self.logger.debug("Receiving wave info")
-        sampwidth = self.mw.receive_int()
-        channels = self.mw.receive_int()
-        rate = self.mw.receive_int()
         self.logger.debug("Creating stream")
-        self.stream = self.p.open(format=self.p.get_format_from_width(sampwidth),
-                                  channels=channels,
-                                  rate=rate,
+        self.stream = self.p.open(format=self.p.get_format_from_width(SAMPWIDTH),
+                                  channels=CHANNELS,
+                                  rate=RATE,
                                   output=True)
 
     def start(self):
         self.logger.debug("Receiving data from transmitter")
         data = self.mw.receive()
-
         while data != b"END":
             self.logger.debug("Received data of len: %d. Writing data to stream", len(data))
             self.stream.write(data)
