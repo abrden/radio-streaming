@@ -41,10 +41,11 @@ class HeartbeatListenerMiddleware:
 
     def connect(self, host):
         context = zmq.Context()
-        self.socket = context.socket(zmq.PULL)
+        self.socket = context.socket(zmq.SUB)
         self.socket.setsockopt(zmq.LINGER, -1)
         self.socket.setsockopt(zmq.RCVTIMEO, 10000)
         self.socket.connect(host)
+        self.socket.setsockopt_string(zmq.SUBSCRIBE, '')
 
     def reconnect(self, host):
         self.socket.close()

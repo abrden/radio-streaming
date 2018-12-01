@@ -31,11 +31,9 @@ class HeartbeatMiddleware:
 
     def connect(self):
         context = zmq.Context()
-        self.socket = context.socket(zmq.PUSH)
+        self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
         self.socket.bind("tcp://*:6002")
 
     def send_heartbeat(self):
-        # FIXME sending a beat for the transmitter and a beat for the receiver. Needs to be a pub-xsub
-        self.socket.send_string("lubdub")
         self.socket.send_string("lubdub")
