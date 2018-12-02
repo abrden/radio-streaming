@@ -9,7 +9,7 @@ services:
       - stations
     environment:
       - STATION_NUM=1
-      - STATIONS_TOTAL=2
+      - STATIONS_TOTAL=3
 
   station2:
     build:
@@ -19,7 +19,17 @@ services:
       - stations
     environment:
       - STATION_NUM=2
-      - STATIONS_TOTAL=2
+      - STATIONS_TOTAL=3
+
+  station3:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+    - stations
+    environment:
+    - STATION_NUM=3
+    - STATIONS_TOTAL=3
 
 networks:
   stations:
