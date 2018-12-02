@@ -10,9 +10,8 @@ class TransmitterMiddleware:
         context = zmq.Context()
         self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.connect("tcp://0.0.0.0:6000")
+        self.socket.connect("tcp://172.20.0.2:6000")
         
-        time.sleep(2)
 
     def send(self, audio_chunk):
         topic = self.country + self.freq

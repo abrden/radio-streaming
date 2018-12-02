@@ -1,5 +1,6 @@
 import zmq
-
+import socket
+socket.gethostbyname(socket.gethostname())
 
 class ReceiverMiddleware:
     def __init__(self, country, freq):
@@ -10,7 +11,7 @@ class ReceiverMiddleware:
         self.socket.setsockopt(zmq.LINGER, -1)
         topic = self.country + self.freq
         self.socket.setsockopt_string(zmq.SUBSCRIBE, topic)
-        self.socket.connect("tcp://0.0.0.0:6001")
+        self.socket.connect("tcp://172.20.0.3:6001")
 
     def receive(self):
         [topic, data] = self.socket.recv_multipart()

@@ -1,0 +1,31 @@
+version: "3"
+services:
+
+  station1:
+    hostname: station1
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    entrypoint: python3
+    command: -u -m station AR
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=1
+      - STATIONS_TOTAL=2
+
+  station2:
+    hostname: station2
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    entrypoint: python3  
+    command: -u -m station RU
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=2
+      - STATIONS_TOTAL=2
+
+networks:
+  stations:
