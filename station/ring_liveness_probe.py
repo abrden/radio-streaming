@@ -61,7 +61,7 @@ class NextAsker(Process):
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
             socket.bind("tcp://*:6004")
-            conns[2] = socket
+            conns[1] = socket
 
             self.logger.info("Binding for station %d", 3)
             socket = context.socket(zmq.PAIR)
@@ -168,8 +168,6 @@ class NextAsker(Process):
         socket.send_string("I'm your new previous")
         self.logger.info("Overwriting next and prev stations")
         self.stations_conns[self.station_num][next] = socket
-        prev = self.previous_station()
-        self.stations_conns[self.station_num][prev] = socket
         self.logger.info("Stations connections %r", self.stations_conns)
 
     def run(self):
@@ -192,6 +190,8 @@ class PreviousAnswerer(Thread):
         self.station_num = station_num
         self.stations_total = stations_total
         self.stations_conns = stations_conns
+        self.poller = zmq.Poller()
+        self.others = []
 
     def previous_station(self):
         if self.station_num - 1 > 0:
@@ -201,20 +201,28 @@ class PreviousAnswerer(Thread):
 
     def answer_live_probe(self):
         prev = self.previous_station()
-        socket = self.stations_conns[prev]
-        self.logger.info("Waiting live probe msg from station %d on socket %r", prev, socket)
-        try:
-            msg = socket.recv()
-            self.logger.info("Received msg from live probe: %r", msg)
-            if msg.decode() == "Alive?":
-                self.logger.info("Answering I'm alive")
-                socket.send_string("I'm alive")
-            if msg.decode == "I'm your new previous":
-                self.logger.info("I have a new previous")
-        except zmq.error.Again:
-            self.logger.info("Timed out waiting for msg from %d to answer", prev)
-            return # Timeout to continue with the loop
+        self.logger.info("Waiting msg from station %d on socket %r", prev, self.stations_conns[prev])
+
+        events = dict(self.poller.poll(10000))
+        for other in self.others:
+            if self.stations_conns[other] in events:
+                socket = self.stations_conns[other]
+                try:
+                    msg = socket.recv()
+                    self.logger.info("Received msg from %d: %r", other, msg)
+                    if msg.decode() == "Alive?":
+                        self.logger.info("Answering I'm alive")
+                        socket.send_string("I'm alive")
+                    if msg.decode == "I'm your new previous":
+                        self.logger.info("I have a new previous")
+                except zmq.error.Again:
+                    self.logger.info("Timed out waiting for msg from %d to answer.", prev)
+                    continue  # Timeout to continue with the loop
 
     def run(self):
-        while True: # TODO graceful quit
+        self.others = self.stations_conns[self.station_num].keys()
+        for other in self.others:
+            self.poller.register(self.stations_conns[other], zmq.POLLIN)
+
+        while True:  # TODO graceful quit
             self.answer_live_probe()
