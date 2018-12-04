@@ -16,3 +16,7 @@ Open another console in the radio-streaming dir and run
 ```
 $ python3 -m receiver AR 100
 ```
+---
+### Ports
+* 6000, 6001 Station XPUB-XSUB
+* 6002 Station heartbeat

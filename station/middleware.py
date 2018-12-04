@@ -1,5 +1,8 @@
+import logging
+
 import zmq
-import logging 
+
+from .heartbeat import Heartbeat
 
 
 class StationMiddleware:
@@ -17,22 +20,28 @@ class StationMiddleware:
         self.backend.setsockopt(zmq.LINGER, -1)
         self.backend.bind("tcp://*:6001")
 
-        poller = zmq.Poller()
-        poller.register(self.frontend, zmq.POLLIN)
-        poller.register(self.backend, zmq.POLLIN)
-        
+        self.poller = zmq.Poller()
+        self.poller.register(self.frontend, zmq.POLLIN)
+        self.poller.register(self.backend, zmq.POLLIN)
+
+        self.logger.info("Starting Heartbeat")
+        self.heartbeat = Heartbeat()
+        self.heartbeat.start()
+
+    def start(self):
         while True:  # TODO Graceful quit
-            events = dict(poller.poll(1000))
+            events = dict(self.poller.poll(1000))
             if self.frontend in events:
                 message = self.frontend.recv_multipart()
-                self.logger.info("[XSUB] Message arrived: %r", message)
+                self.logger.info("[XSUB] Message arrived")
                 self.backend.send_multipart(message)
             if self.backend in events:
                 message = self.backend.recv_multipart()
-                self.logger.info("[XPUB] Message arrived: %r", message)
+                self.logger.info("[XPUB] Message arrived")
                 self.frontend.send_multipart(message)
 
     def close(self):
         self.frontend.close()
         self.backend.close()
-        # TODO Proper closure        
+        # TODO Terminate context
+        self.heartbeat.join()
