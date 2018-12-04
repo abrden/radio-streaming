@@ -1,22 +1,24 @@
 from threading import Thread
-from multiprocessing import Process
+from multiprocessing import Process, Value
 import logging
 import time
+import pickle
 
 import zmq
 
 
-class NextAsker(Process):
-    def __init__(self, station_num, stations_total):
-        super(NextAsker, self).__init__()
-        self.logger = logging.getLogger("NextAsker")
+class Ring(Process):
+    def __init__(self, station_num, stations_total, queue, leader):
+        super(Ring, self).__init__()
+        self.logger = logging.getLogger("Ring")
         self.station_num = station_num
         self.stations_total = stations_total
+        self.queue = queue
+        self.leader = leader
+        self.next = Value('i', self.next_station(), lock=True)
         self.stations_conns = {}
-        self.answerer = PreviousAnswerer(self.station_num, self.stations_total, self.stations_conns)
-        self.poller = zmq.Poller()
-        self.others = []
-        self.next = self.next_station()
+        self.asker = NextAsker(self.station_num, self.stations_total, self.next, self.stations_conns)
+        self.answerer = PreviousAnswerer(self.station_num, self.stations_total, self.next, self.stations_conns)
 
     def connect_to_ring_pals(self):  # FIXME
         context = zmq.Context()
@@ -141,21 +143,47 @@ class NextAsker(Process):
         else:
             return 1
 
-    def previous_station(self):
-        if self.station_num - 1 > 0:
-            return self.station_num - 1
+    def run(self):
+        self.connect_to_ring_pals()
+        self.asker.start()
+        self.answerer.start()
+
+        while True:  # FIXME Graceful quit
+            msg = self.queue.get()
+            b_data = pickle.dumps(msg, -1)
+            self.stations_conns[self.station_num][self.next.value].send(b_data)
+            time.sleep(10)
+
+        self.asker.join()
+        self.answerer.join()
+
+
+class NextAsker(Thread):
+    def __init__(self, station_num, stations_total, next, stations_conns):
+        super(NextAsker, self).__init__()
+        self.logger = logging.getLogger("NextAsker")
+        self.station_num = station_num
+        self.stations_total = stations_total
+        self.next = next
+        self.stations_conns = stations_conns
+        self.poller = zmq.Poller()
+        self.others = []
+
+    def next_station_to(self, station_num):
+        if station_num + 1 <= self.stations_total:
+            return station_num + 1
         else:
-            return self.stations_total
+            return 1
 
     def send_live_probe(self):  # TODO Ver que respete maquina de estados (recibir im alive del next y solo cambiar receptor si llega un Im your next)
-        self.logger.info("Sending 'Alive?' msg to station %d", self.next)
-        socket = self.stations_conns[self.station_num][self.next]
+        self.logger.info("Sending 'Alive?' msg to station %d", self.next.value)
+        socket = self.stations_conns[self.station_num][self.next.value]
         try:
             socket.send_string("Alive?")
         except zmq.error.Again:
             self.logger.info("Timeout on send.")
             return False
-        self.logger.info("Waiting for response from station %d", self.next)
+        self.logger.info("Waiting for response from station %d", self.next.value)
         ok = False  # Will stay False in case of timeout
         events = dict(self.poller.poll(100000))
         for other in self.others:
@@ -168,12 +196,12 @@ class NextAsker(Process):
                     self.logger.info("I'm alive received")
                 if msg.decode() == "I'm your new next":
                     self.logger.info("New next found: %d. Updating next variable", other)
-                    self.next = other
+                    self.next.value = other
         return ok
 
     def bypass_next_station(self):
         self.logger.info("Bypassing next node")
-        next = self.next
+        next = self.next.value
         nextnext = self.next_station_to(next)
         self.logger.info("Nextnext is %d", nextnext)
         if nextnext == self.station_num:
@@ -182,31 +210,28 @@ class NextAsker(Process):
         socket = self.stations_conns[self.station_num][nextnext]
         socket.send_string("I'm your new previous")
         self.logger.info("Updating next station variable to %d", nextnext)
-        self.next = nextnext
+        self.next.value = nextnext
         self.logger.info("Stations connections %r", self.stations_conns)
 
     def run(self):
-        self.connect_to_ring_pals()
         self.others = self.stations_conns[self.station_num].keys()
         for other in self.others:
             self.poller.register(self.stations_conns[self.station_num][other], zmq.POLLIN)
-        self.answerer.start()
 
-        while True: # TODO graceful quit
+        while True:  # TODO graceful quit
             ok = self.send_live_probe()
             if not ok:
                 self.bypass_next_station()
             time.sleep(5)
 
-        self.answerer.join()
-
 
 class PreviousAnswerer(Thread):
-    def __init__(self, station_num, stations_total, stations_conns):
+    def __init__(self, station_num, stations_total, next, stations_conns):
         super(PreviousAnswerer, self).__init__()
         self.logger = logging.getLogger("PreviousAnswerer")
         self.station_num = station_num
         self.stations_total = stations_total
+        self.next = next
         self.stations_conns = stations_conns
         self.poller = zmq.Poller()
         self.others = []
@@ -225,11 +250,17 @@ class PreviousAnswerer(Thread):
                 try:
                     msg = socket.recv()
                     self.logger.info("Received msg from %d: %r", other, msg)
-                    if msg.decode() == "Alive?":
-                        self.logger.info("Answering I'm alive")
-                        socket.send_string("I'm alive")
-                    if msg.decode() == "I'm your new previous":
-                        self.logger.info("I have a new previous")
+                    try:
+                        msg_dec = msg.decode()
+                        if msg_dec == "Alive?":
+                            self.logger.info("Answering I'm alive")
+                            socket.send_string("I'm alive")
+                        elif msg_dec == "I'm your new previous":
+                            self.logger.info("I have a new previous")
+                    except UnicodeDecodeError:
+                        msg_dec = pickle.loads(msg)
+                        self.logger.info("Data received: %r", msg_dec)  # TODO Reenviar al proximo? Como detener un loop infinito de un dato???
+                        self.stations_conns[self.next.value].send(msg)
                 except zmq.error.Again:
                     self.logger.info("Timed out waiting for msg from previous to answer.")
                     continue  # Timeout to continue with the loop

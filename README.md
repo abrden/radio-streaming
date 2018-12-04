@@ -21,3 +21,4 @@ $ python3 -m receiver AR 100
 * 6000, 6001 Station XPUB-XSUB
 * 6002 Station heartbeat
 * 6003, 6004 Stations "are you alive?"
+* 6005 Ask if leader

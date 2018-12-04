@@ -1,8 +1,10 @@
 import logging
+from multiprocessing import Queue, Value
 
 import zmq
 
-from .ring_liveness_probe import NextAsker
+from .ring import Ring
+from .answer_if_leader import AnswerIfLeader
 from .heartbeat import Heartbeat
 
 
@@ -27,9 +29,19 @@ class StationMiddleware:
         self.poller.register(self.frontend, zmq.POLLIN)
         self.poller.register(self.backend, zmq.POLLIN)
 
-        self.logger.info("Starting ring's liveness probe")
-        self.heartbeat = NextAsker(station_num, stations_total)
-        self.heartbeat.start()
+        self.logger.info("Init message queue")
+        self.queue = Queue()  # To push an item to this queue is equivalent to send a msg through the ring
+
+        self.logger.info("Init leader value")
+        self.leader = Value('i', 3, lock=True)
+
+        self.logger.info("Starting Ring")
+        self.ring = Ring(station_num, stations_total, self.queue, self.leader)
+        self.ring.start()
+
+        self.logger.info("Starting AnswerIfLeader server")
+        self.answer_if_leader = AnswerIfLeader(station_num, self.leader)
+        self.answer_if_leader.start()
 
         self.logger.info("Starting Heartbeat")
         self.heartbeat = Heartbeat()
@@ -52,3 +64,5 @@ class StationMiddleware:
         self.backend.close()
         # TODO Terminate context
         self.heartbeat.join()
+        self.ring.join()
+        self.answer_if_leader.join()
