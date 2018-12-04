@@ -6,7 +6,7 @@ import zmq
 from .ring import Ring
 from .answer_if_leader import AnswerIfLeader
 from .heartbeat import Heartbeat
-
+from .leaderElection import LeaderElection
 
 class StationMiddleware:
     def __init__(self, station_num, stations_total):
@@ -30,23 +30,24 @@ class StationMiddleware:
         self.poller.register(self.backend, zmq.POLLIN)
 
         self.logger.info("Init message queue")
-        self.queue = Queue()  # To push an item to this queue is equivalent to send a msg through the ring
+        self.sendQueue = Queue()  # To push an item to this queue is equivalent to send a msg through the ring
+        self.recvQueue = Queue()
 
         self.logger.info("Init leader value")
         self.leader = Value('i', 3, lock=True)
 
         self.logger.info("Starting Ring")
-        self.ring = Ring(station_num, stations_total, self.queue, self.leader)
+        self.ring = Ring(station_num, stations_total, self.sendQueue, self.recvQueue, self.leader)
         self.ring.start()
 
-        self.logger.info("Starting AnswerIfLeader server")
-        self.answer_if_leader = AnswerIfLeader(station_num, self.leader)
-        self.answer_if_leader.start()
+        self.logger.info("Starting leader election")
+        self.leaderElection = LeaderElection(station_num, self.sendQueue, self.recvQueue)
+        self.leaderElection.begin()
 
         self.logger.info("Starting Heartbeat")
         self.heartbeat = Heartbeat()
         self.heartbeat.start()
-
+                
     def start(self):
         while True:  # TODO Graceful quit
             events = dict(self.poller.poll(1000))
@@ -62,6 +63,7 @@ class StationMiddleware:
     def close(self):
         self.frontend.close()
         self.backend.close()
+       
         # TODO Terminate context
         self.heartbeat.join()
         self.ring.join()

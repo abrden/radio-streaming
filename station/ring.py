@@ -8,17 +8,17 @@ import zmq
 
 
 class Ring(Process):
-    def __init__(self, station_num, stations_total, queue, leader):
+    def __init__(self, station_num, stations_total, in_queue, out_queue, leader):
         super(Ring, self).__init__()
         self.logger = logging.getLogger("Ring")
         self.station_num = station_num
         self.stations_total = stations_total
-        self.queue = queue
+        self.in_queue = in_queue
         self.leader = leader
         self.next = Value('i', self.next_station(), lock=True)
         self.stations_conns = {}
         self.asker = NextAsker(self.station_num, self.stations_total, self.next, self.stations_conns)
-        self.answerer = PreviousAnswerer(self.station_num, self.stations_total, self.next, self.stations_conns)
+        self.answerer = PreviousAnswerer(self.station_num, self.stations_total, self.next, self.stations_conns, out_queue)
 
     def connect_to_ring_pals(self):  # FIXME
         context = zmq.Context()
@@ -26,8 +26,8 @@ class Ring(Process):
             conns = {}
             self.logger.info("Binding for station %d", 2)
             socket = context.socket(zmq.PAIR)
-            socket.setsockopt(zmq.RCVTIMEO, 10000)
-            socket.setsockopt(zmq.SNDTIMEO, 10000)
+            socket.setsockopt(zmq.RCVTIMEO, 20000)
+            socket.setsockopt(zmq.SNDTIMEO, 20000)
             socket.setsockopt(zmq.LINGER, -1)
             socket.bind("tcp://*:6003")
             conns[2] = socket
@@ -149,10 +149,9 @@ class Ring(Process):
         self.answerer.start()
 
         while True:  # FIXME Graceful quit
-            msg = self.queue.get()
+            msg = self.in_queue.get()
             b_data = pickle.dumps(msg, -1)
             self.stations_conns[self.station_num][self.next.value].send(b_data)
-            time.sleep(10)
 
         self.asker.join()
         self.answerer.join()
@@ -226,9 +225,10 @@ class NextAsker(Thread):
 
 
 class PreviousAnswerer(Thread):
-    def __init__(self, station_num, stations_total, next, stations_conns):
+    def __init__(self, station_num, stations_total, next, stations_conns, out_queue):
         super(PreviousAnswerer, self).__init__()
         self.logger = logging.getLogger("PreviousAnswerer")
+        self.out_queue = out_queue
         self.station_num = station_num
         self.stations_total = stations_total
         self.next = next
@@ -260,7 +260,8 @@ class PreviousAnswerer(Thread):
                     except UnicodeDecodeError:
                         msg_dec = pickle.loads(msg)
                         self.logger.info("Data received: %r", msg_dec)  # TODO Reenviar al proximo? Como detener un loop infinito de un dato???
-                        self.stations_conns[self.next.value].send(msg)
+                        #self.stations_conns[self.next.value].send(msg)
+                        self.out_queue.put(msg_dec)
                 except zmq.error.Again:
                     self.logger.info("Timed out waiting for msg from previous to answer.")
                     continue  # Timeout to continue with the loop
