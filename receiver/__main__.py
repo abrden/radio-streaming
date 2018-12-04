@@ -4,12 +4,13 @@ logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(thread
 
 from .receiver import Receiver
 
-COUNTRY_INDEX = 1
-FREQUENCY_INDEX = 2
+ORIGIN_COUNTRY_INDEX = 1
+COUNTRY_INDEX = 2
+FREQUENCY_INDEX = 3
 
 
 def main(args):
-    r = Receiver(args[COUNTRY_INDEX], args[FREQUENCY_INDEX])
+    r = Receiver(args[ORIGIN_COUNTRY_INDEX], args[COUNTRY_INDEX], args[FREQUENCY_INDEX])
     r.start()
 
 

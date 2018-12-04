@@ -10,8 +10,14 @@ class TransmitterMiddleware:
         context = zmq.Context()
         self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.connect("tcp://172.20.0.2:6000")
-        
+        antennaConnectionData = self.getConnectionDataFor(country)
+        self.socket.connect(antennaConnectionData)
+
+    def getConnectionDataFor(self, country):
+        if country == "AR":
+            return "tcp://172.20.0.3:6000" #TODO: Ask stations for the leader
+        else:
+            return "tcp://172.20.0.2:6000"
 
     def send(self, audio_chunk):
         topic = self.country + self.freq

@@ -3,10 +3,11 @@ import logging
 from multiprocessing import Process
 
 class Retransmitter(Process):
-    def __init__(self, country):
+    def __init__(self, country,freq):
         super(Retransmitter, self).__init__()
         self.logger = logging.getLogger("Starting Retransmitter middleware")
         self.country = country
+        self.freq = freq
         self.someoneListens = True
         antenaConnectionData = self.getConnectionDataFor(country)
         self.mw = RetransmitterMiddleware(antenaConnectionData)
@@ -14,18 +15,11 @@ class Retransmitter(Process):
     def getConnectionDataFor(self, country):
         return "tcp://station2:6001"
 
-    def listenFor(self, freq):
-        self.mw.subscribe(self.country + freq)
-    
-    def stopListeningFrom(self, freq):
-        self.mw.unSubscribe(self.country + freq)
-            
     def run(self):
-        self.logger.debug("PASAMO POR ACA")
+        self.logger.debug("Retransmitter for country "+ self.country + " at freq " + self.freq +" started")
         self.mw.connect()
-        self.mw.subscribe("RU100")
+        self.mw.subscribe(self.country+self.freq)
         while self.someoneListens:
-           self.logger.debug("Listening outside countr:"+self.country)
            [topic, data] = self.mw.receive()
            self.logger.debug("Message received from:" + self.country)
            self.mw.send(topic, data)

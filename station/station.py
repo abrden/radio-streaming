@@ -30,14 +30,13 @@ class Station:
                     self.listenersAnotherCountry[topic] -= 1
                     if self.listenersAnotherCountry[topic] == 0:
                         self.stopListeningFrom(country, freq)
+                        self.listenersAnotherCountry.pop(topic, None)
                 
     def startListeningFor(self, country, freq):
-        if country in self.retransmitters:
-            self.retransmitters[country].listenFor(freq)
-        else:
-            self.logger.debug("Start listening in country:" + country + " and freq:" + freq)
-            self.retransmitters[country] = Retransmitter(country)
-            self.retransmitters[country].start()
+        self.logger.debug("Start listening in country:" + country + " and freq:" + freq)
+        self.retransmitters[country+freq] = Retransmitter(country,freq)
+        self.retransmitters[country+freq].start()
 
-    def stopListeningFrom(self, country,freq):        
-        self.retransmitters[country].stopListeningFrom(freq)
+    def stopListeningFrom(self, country, freq):        
+        self.retransmitters[country+freq].terminate()
+        self.retransmitters[country+freq].join()
