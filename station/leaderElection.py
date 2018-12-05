@@ -12,25 +12,27 @@ DELIMITER = ","
 TIME_BETWEEN_ELECTIONS = 60.0
 
 class LeaderElection(Process):
-    def __init__(self, id, sendQueue, recvQueue):
+    def __init__(self, id, sendQueue, recvQueue, newsQueue):
         super(LeaderElection, self).__init__()
-        self.lem = LeaderElectionModule(id, sendQueue, recvQueue)
+        self.lem = LeaderElectionModule(id, sendQueue, recvQueue, newsQueue)
         
     def run(self):
         self.lem.begin()
 
 class LeaderElectionModule:
-    def __init__(self, id, sendQueue, recvQueue, ):
+    def __init__(self, id, sendQueue, recvQueue, newsQueue):
         self.logger = logging.getLogger("LeaderElection")
         self.id = id
         self.sendQueue = sendQueue
         self.recvQueue = recvQueue
+        self.newsQueue = newsQueue
         self.state = NON_PARTICIPANT
         self.leader = WITHOUT_NEW_LEADER
         
     def begin(self):
         while True: #TODO: Fix sleep
-            self.startNewElection()    
+            self.startNewElection()
+            self.newsQueue.put(self.leader)    
             time.sleep(TIME_BETWEEN_ELECTIONS)
     
     def getLeader(self):
@@ -66,7 +68,6 @@ class LeaderElectionModule:
                 else:
                     newLeader = receivedId  
                     if newLeader != self.id:
-                        #if self.state == LEADER: #TODO: ADD RUN ON FATHER FOR CLEAN UP
                         self.state = NON_PARTICIPANT
                         self.sendQueue.put(self.encodeElectionMessage(newLeader, "NEW_LEADER"))
         except:

@@ -15,7 +15,7 @@ class TransmitterMiddleware:
         context = zmq.Context()
         self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.connect("tcp://0.0.0.0:6000")
+        self.socket.connect("tcp://172.20.0.2:6000")
 
         self.logger.info("Starting StationHeartbeat")
         self.heartbeart_monitor = HeartbeatListener("tcp://0.0.0.0:6002", self.new_leaders_addr)

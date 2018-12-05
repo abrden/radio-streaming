@@ -13,7 +13,7 @@ class ReceiverMiddleware:
         self.socket.setsockopt(zmq.LINGER, -1)
         self.topic = country + freq
         self.socket.setsockopt_string(zmq.SUBSCRIBE, self.topic)
-        self.socket.connect("tcp://0.0.0.0:6001")
+        self.socket.connect("tcp://172.20.0.2:6001")
 
         self.logger.info("Starting StationHeartbeat")
         self.heartbeart_monitor = HeartbeatListener("tcp://0.0.0.0:6002", self.new_leaders_addr)
