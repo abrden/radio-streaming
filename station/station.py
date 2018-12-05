@@ -40,3 +40,8 @@ class Station:
     def stopListeningFrom(self, country, freq):        
         self.retransmitters[country+freq].terminate()
         self.retransmitters[country+freq].join()
+
+    def closeRetransmissions(self):
+        for topic, value in self.listenersAnotherCountry.items():
+            self.stopListeningFor(topic)
+            self.listenersAnotherCountry.pop(topic, None)
