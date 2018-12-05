@@ -42,7 +42,7 @@ class StationMiddleware:
 
         self.logger.info("Starting leader election")
         self.leaderElection = LeaderElection(station_num, self.sendQueue, self.recvQueue)
-        self.leaderElection.begin()
+        self.leaderElection.start()
 
         self.logger.info("Starting Heartbeat")
         self.heartbeat = Heartbeat()

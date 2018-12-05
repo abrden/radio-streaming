@@ -26,8 +26,8 @@ class Ring(Process):
             conns = {}
             self.logger.info("Binding for station %d", 2)
             socket = context.socket(zmq.PAIR)
-            socket.setsockopt(zmq.RCVTIMEO, 20000)
-            socket.setsockopt(zmq.SNDTIMEO, 20000)
+            socket.setsockopt(zmq.RCVTIMEO, 10000)
+            socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
             socket.bind("tcp://*:6003")
             conns[2] = socket
@@ -144,15 +144,20 @@ class Ring(Process):
             return 1
 
     def run(self):
-        self.connect_to_ring_pals()
-        self.asker.start()
-        self.answerer.start()
-
+        try:
+            self.connect_to_ring_pals()
+            self.asker.start()
+            self.answerer.start()
+        except zmq.error.Again:
+            self.logger.info("Timeout on send.")
+            
         while True:  # FIXME Graceful quit
             msg = self.in_queue.get()
             b_data = pickle.dumps(msg, -1)
-            self.stations_conns[self.station_num][self.next.value].send(b_data)
-
+            try:
+                self.stations_conns[self.station_num][self.next.value].send(b_data)
+            except zmq.error.Again:
+                self.logger.info("Timeout on send.")
         self.asker.join()
         self.answerer.join()
 
@@ -220,7 +225,11 @@ class NextAsker(Thread):
         while True:  # TODO graceful quit
             ok = self.send_live_probe()
             if not ok:
-                self.bypass_next_station()
+                try:
+                    self.bypass_next_station()
+                except zmq.error.Again:
+                    self.logger.info("Timeout on send.")
+            
             time.sleep(5)
 
 
@@ -272,4 +281,7 @@ class PreviousAnswerer(Thread):
             self.poller.register(self.stations_conns[other], zmq.POLLIN)
 
         while True:  # TODO graceful quit
-            self.answer_live_probe()
+            try:
+                self.answer_live_probe()
+            except zmq.error.Again:
+                self.logger.info("Timeout on send.")
