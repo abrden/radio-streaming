@@ -20,14 +20,14 @@ class LeaderElection(Process):
         self.lem.begin()
 
 class LeaderElectionModule:
-    def __init__(self, id, sendQueue, recvQueue):
+    def __init__(self, id, sendQueue, recvQueue, ):
         self.logger = logging.getLogger("LeaderElection")
         self.id = id
         self.sendQueue = sendQueue
         self.recvQueue = recvQueue
         self.state = NON_PARTICIPANT
         self.leader = WITHOUT_NEW_LEADER
-
+        
     def begin(self):
         while True: #TODO: Fix sleep
             self.startNewElection()    
@@ -66,6 +66,7 @@ class LeaderElectionModule:
                 else:
                     newLeader = receivedId  
                     if newLeader != self.id:
+                        #if self.state == LEADER: #TODO: ADD RUN ON FATHER FOR CLEAN UP
                         self.state = NON_PARTICIPANT
                         self.sendQueue.put(self.encodeElectionMessage(newLeader, "NEW_LEADER"))
         except:
