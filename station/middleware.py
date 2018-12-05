@@ -33,7 +33,7 @@ class StationMiddleware:
         self.queue = Queue()  # To push an item to this queue is equivalent to send a msg through the ring
 
         self.logger.info("Init leader value")
-        self.leader = Value('i', 3, lock=True)
+        self.leader = Value('i', 3, lock=True)  # FIXME Initialization number??
 
         self.logger.info("Starting Ring")
         self.ring = Ring(station_num, stations_total, self.queue, self.leader)

@@ -31,5 +31,20 @@ services:
     - STATION_NUM=3
     - STATIONS_TOTAL=3
 
+  receiver:
+    build:
+      context: .
+      dockerfile: receiver/Dockerfile
+    depends_on:
+      - station1
+      - station2
+      - station3
+    networks:
+      - stations
+    environment:
+      - COUNTRY=AR
+      - FREQUENCY=100
+      - STATIONS_TOTAL=3
+
 networks:
   stations:
