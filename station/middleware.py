@@ -7,7 +7,7 @@ from .ring import Ring
 from .answer_if_leader import AnswerIfLeader
 from .heartbeat import Heartbeat
 from .leaderElection import LeaderElection
-from .broker import Broker
+from .broker import Broker, WITHOUT_NEW_LEADER
 
 class StationMiddleware:
     def __init__(self, station_num, stations_total):
@@ -17,7 +17,8 @@ class StationMiddleware:
         self.leaderNews = Queue() # Notifies the results of the elections.
         self.logger = logging.getLogger("StationMiddleware")
         self.id = station_num 
-        self.broker = Broker()
+        self.broker = None
+        self.leader = WITHOUT_NEW_LEADER
         
         self.logger.info("Init message queue")
         
@@ -40,8 +41,9 @@ class StationMiddleware:
     
     def listenForChanges(self):
         while True: #TODO: Handle this graceful quit now :)
-            leader = self.leaderNews.get()
-            if leader == self.id and not self.brokerIsUp:
+            self.leader = self.leaderNews.get()
+            if self.leader == self.id and not self.brokerIsUp:
+                self.broker = Broker()
                 self.brokerIsUp = True
                 self.logger.info("START BROKER ON " + str(self.id))
                 self.broker.start()

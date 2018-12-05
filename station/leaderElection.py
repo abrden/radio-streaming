@@ -9,7 +9,8 @@ PARTICIPANT = 1
 LEADER = 3
 WITHOUT_NEW_LEADER = -1
 DELIMITER = ","
-TIME_BETWEEN_ELECTIONS = 60.0
+TIME_BETWEEN_ELECTIONS = 10.0
+NUMBER_OF_REPLICAS = 3
 
 class LeaderElection(Process):
     def __init__(self, id, sendQueue, recvQueue, newsQueue):
@@ -30,29 +31,38 @@ class LeaderElectionModule:
         self.leader = WITHOUT_NEW_LEADER
         
     def begin(self):
+        newMsg = None
         while True: #TODO: Fix sleep
-            self.startNewElection()
+            self.startNewElection(newMsg)
             self.newsQueue.put(self.leader)    
-            time.sleep(TIME_BETWEEN_ELECTIONS)
-    
+            try:
+                newMsg = self.recvQueue.get(timeout=TIME_BETWEEN_ELECTIONS)
+            except:
+                self.logger.debug("Leader queue inactive for long time")
+                self.leader = WITHOUT_NEW_LEADER
+                newMsg = None
+            #time.sleep(TIME_BETWEEN_ELECTIONS)
     def getLeader(self):
         return self.leader
 
-    def startNewElection(self):
+    def startNewElection(self, msg):
         self.logger.info("Electing new world leader")
         newLeader = WITHOUT_NEW_LEADER
         firstIteration = True
-        alreadyRetransmitted = False
+        messagesRetransmitted = 0
         try:
             while newLeader == WITHOUT_NEW_LEADER:
-                if firstIteration:
-                    self.logger.info("Sending new vote " + str(self.id))
-                    self.sendQueue.put(self.encodeElectionMessage(self.id, "VOTING"))
-                    firstIteration = False
+                if msg is None:
+                    if firstIteration:
+                        self.logger.info("Sending new vote " + str(self.id))
+                        self.sendQueue.put(self.encodeElectionMessage(self.id, "VOTING"))
+                        firstIteration = False
+                    receivedId, msgType = self.decodeElectionMessage(self.recvQueue.get(timeout=TIME_BETWEEN_ELECTIONS * 3))
+                else:
+                    receivedId, msgType = self.decodeElectionMessage(msg)
+                    msg = None
                 if self.state != LEADER:
                     self.state = PARTICIPANT
-                receivedId, msgType = self.decodeElectionMessage(self.recvQueue.get())
-            
                 if msgType == "VOTING":
                     if receivedId == self.id:
                         self.logger.info("Leader found, broadcasting")
@@ -62,9 +72,9 @@ class LeaderElectionModule:
                     else:
                         retransmitId = receivedId if receivedId > self.id else self.id
                         self.logger.info("Arrived id " + str(receivedId)+ " compared to " + str(self.id) + " REsutl.:"+str(retransmitId))
-                        if retransmitId > self.id:
+                        if retransmitId > self.id and messagesRetransmitted < NUMBER_OF_REPLICAS:
                             self.sendQueue.put(self.encodeElectionMessage(retransmitId, "VOTING"))
-                            alreadyRetransmitted = True
+                            messagesRetransmitted += 1
                 else:
                     newLeader = receivedId  
                     if newLeader != self.id:
