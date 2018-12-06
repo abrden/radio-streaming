@@ -2,7 +2,6 @@ import logging
 
 from .middleware import StationMiddleware
 
-
 class Station:
     def __init__(self, country, station_num, stations_total):
         self.logger = logging.getLogger("Station")
@@ -14,3 +13,4 @@ class Station:
 
     def close(self):
         self.mw.close()
+        

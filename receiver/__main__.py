@@ -5,11 +5,9 @@ logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(thread
 
 from .receiver import Receiver
 
-
 def main(args):
-    r = Receiver(os.environ['COUNTRY'], os.environ['FREQUENCY'], int(os.environ['STATIONS_TOTAL']))
+    r = Receiver(os.environ['ORIGIN_COUNTRY'],os.environ['COUNTRY'], os.environ['FREQUENCY'], int(os.environ['STATIONS_TOTAL']))
     r.start()
-
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -5,7 +5,6 @@ logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(thread
 
 from .station import Station
 
-
 def main(args):
     s = Station(os.environ['COUNTRY'], int(os.environ['STATION_NUM']), int(os.environ['STATIONS_TOTAL']))
     try:

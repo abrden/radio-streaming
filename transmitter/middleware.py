@@ -25,6 +25,7 @@ class TransmitterMiddleware:
         self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
         self.socket.connect(leader_addr + ":6000")
+        self.logger.info("Connected to: " + leader_addr)
 
         self.logger.info("Starting StationHeartbeat")
         self.heartbeart_monitor = HeartbeatListener(leader_addr + ":6002", self.new_leaders_addr)
@@ -47,4 +48,4 @@ class TransmitterMiddleware:
         self.logger.info("Leader is %d", leader)
         leader_addr = "tcp://station_" + self.country.lower() + "_" + str(leader)
         # FIXME PUB on new leader
-        return leader_addr + ":6002"
+        return leader_addr + ":6002" #TODO: Esto no seria 6000?
