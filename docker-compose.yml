@@ -28,11 +28,11 @@ services:
       context: .
       dockerfile: station/Dockerfile
     networks:
-    - stations
+      - stations
     environment:
-    - STATION_NUM=3
-    - STATIONS_TOTAL=3
-    - COUNTRY=AR
+      - STATION_NUM=3
+      - STATIONS_TOTAL=3
+      - COUNTRY=AR
 
   receiver:
     build:
@@ -56,9 +56,9 @@ services:
       context: .
       dockerfile: transmitter/Dockerfile
     depends_on:
-      - station1
-      - station2
-      - station3
+      - station_ar_1
+      - station_ar_2
+      - station_ar_3
       - receiver
     networks:
       - stations
