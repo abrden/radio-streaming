@@ -70,4 +70,4 @@ class RetransmitterMiddleware:
         self.logger.info("Leader is %d", leader)
         leader_addr = "tcp://station_" + self.country.lower() + "_" + str(leader)
         # FIXME subscribe to leaders SUB
-        return leader_addr + ":6001"    
+        return leader_addr + ":6002"    
