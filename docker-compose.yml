@@ -48,6 +48,25 @@ services:
       - COUNTRY=AR
       - FREQUENCY=100
       - STATIONS_TOTAL=3
+    devices:
+      - /dev/snd:/dev/snd
+
+  transmitter:
+    build:
+      context: .
+      dockerfile: transmitter/Dockerfile
+    depends_on:
+      - station1
+      - station2
+      - station3
+      - receiver
+    networks:
+      - stations
+    environment:
+      - COUNTRY=AR
+      - FREQUENCY=100
+      - STATIONS_TOTAL=3
+      - AUDIO_FILE=/transmitter/transmitter/glitch-mob.wav
 
 networks:
   stations:
