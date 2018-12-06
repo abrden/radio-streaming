@@ -8,9 +8,10 @@ import zmq
 
 
 class Ring(Process):
-    def __init__(self, station_num, stations_total, queue, leader):
+    def __init__(self, country, station_num, stations_total, queue, leader):
         super(Ring, self).__init__()
         self.logger = logging.getLogger("Ring")
+        self.country = country
         self.station_num = station_num
         self.stations_total = stations_total
         self.queue = queue
@@ -47,7 +48,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station2:6004")
+            socket.connect("tcp://station_" + self.country.lower() + "_2:6004")
             self.stations_conns[2] = socket
 
             self.logger.info("Connecting to station %d", 3)
@@ -55,7 +56,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station3:6003")
+            socket.connect("tcp://station_" + self.country.lower() + "_3:6003")
             socket.send_string("I'm your new next")
             self.stations_conns[3] = socket
 
@@ -84,7 +85,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station3:6004")
+            socket.connect("tcp://station_" + self.country.lower() + "_3:6004")
             self.stations_conns[3] = socket
 
             self.logger.info("Connecting to station %d", 1)
@@ -92,7 +93,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station1:6003")
+            socket.connect("tcp://station_" + self.country.lower() + "_1:6003")
             socket.send_string("I'm your new next")
             self.stations_conns[1] = socket
 
@@ -121,7 +122,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station1:6004")
+            socket.connect("tcp://station_" + self.country.lower() + "_1:6004")
             self.stations_conns[1] = socket
 
             self.logger.info("Connecting to station %d", 2)
@@ -129,7 +130,7 @@ class Ring(Process):
             socket.setsockopt(zmq.RCVTIMEO, 10000)
             socket.setsockopt(zmq.SNDTIMEO, 10000)
             socket.setsockopt(zmq.LINGER, -1)
-            socket.connect("tcp://station2:6003")
+            socket.connect("tcp://station_" + self.country.lower() + "_2:6003")
             socket.send_string("I'm your new next")
             self.stations_conns[2] = socket
         self.logger.info("Stations connections %r", self.stations_conns)

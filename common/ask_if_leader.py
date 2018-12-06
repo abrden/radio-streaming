@@ -4,10 +4,11 @@ import zmq
 
 
 class AskIfLeader:
-    def __init__(self, stations_total):
+    def __init__(self, country, stations_total):
         super(AskIfLeader, self).__init__()
         self.logger = logging.getLogger("AskIfLeader")
         self.stations_total = stations_total
+        self.country = country
         self.client = None
 
     def connect_to_station(self, station_num):
@@ -15,7 +16,7 @@ class AskIfLeader:
         context = zmq.Context()
         self.client = context.socket(zmq.REQ)
         self.client.setsockopt(zmq.LINGER, -1)
-        self.client.connect("tcp://station" + str(station_num) + ":6005")
+        self.client.connect("tcp://station_" + self.country.lower() + "_" + str(station_num) + ":6005")
 
     def find_leader(self):
         leader = -1

@@ -9,7 +9,7 @@ from .heartbeat import Heartbeat
 
 
 class StationMiddleware:
-    def __init__(self, station_num, stations_total):
+    def __init__(self, country, station_num, stations_total):
         self.logger = logging.getLogger("StationMiddleware")
 
         self.logger.info("Setting up XPUB-XSUB")
@@ -36,7 +36,7 @@ class StationMiddleware:
         self.leader = Value('i', 3, lock=True)  # FIXME Initialization number??
 
         self.logger.info("Starting Ring")
-        self.ring = Ring(station_num, stations_total, self.queue, self.leader)
+        self.ring = Ring(country, station_num, stations_total, self.queue, self.leader)
         self.ring.start()
 
         self.logger.info("Starting AnswerIfLeader server")

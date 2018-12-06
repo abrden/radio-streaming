@@ -1,7 +1,7 @@
 version: "3"
 services:
 
-  station1:
+  station_ar_1:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -10,8 +10,9 @@ services:
     environment:
       - STATION_NUM=1
       - STATIONS_TOTAL=3
+      - COUNTRY=AR
 
-  station2:
+  station_ar_2:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -20,8 +21,9 @@ services:
     environment:
       - STATION_NUM=2
       - STATIONS_TOTAL=3
+      - COUNTRY=AR
 
-  station3:
+  station_ar_3:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -30,15 +32,16 @@ services:
     environment:
     - STATION_NUM=3
     - STATIONS_TOTAL=3
+    - COUNTRY=AR
 
   receiver:
     build:
       context: .
       dockerfile: receiver/Dockerfile
     depends_on:
-      - station1
-      - station2
-      - station3
+      - station_ar_1
+      - station_ar_2
+      - station_ar_3
     networks:
       - stations
     environment:
