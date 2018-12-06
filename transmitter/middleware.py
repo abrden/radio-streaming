@@ -15,13 +15,18 @@ class TransmitterMiddleware:
         context = zmq.Context()
         self.socket = context.socket(zmq.PUB)
         self.socket.setsockopt(zmq.LINGER, -1)
-        self.socket.connect("tcp://172.20.0.2:6000")
-
+        antennaConnectionData = self.getConnectionDataFor(country)
+        self.socket.connect(antennaConnectionData)
+        self.logger.info("Connected to: " + antennaConnectionData)
         self.logger.info("Starting StationHeartbeat")
         self.heartbeart_monitor = HeartbeatListener("tcp://0.0.0.0:6002", self.new_leaders_addr)
         self.heartbeart_monitor.start()
 
-        time.sleep(2)
+    def getConnectionDataFor(self, country):
+        if country == "AR":
+            return "tcp://172.20.0.4:6000" #TODO: Ask stations for the leader
+        else:
+            return "tcp://172.20.0.3:6000"
 
     def send(self, audio_chunk):
         topic = self.country + self.freq

@@ -5,30 +5,72 @@ services:
     build:
       context: .
       dockerfile: station/Dockerfile
+    hostname: station1
     networks:
       - stations
     environment:
       - STATION_NUM=1
+      - COUNTRY=AR
       - STATIONS_TOTAL=3
 
   station2:
     build:
       context: .
       dockerfile: station/Dockerfile
+    hostname: station2
     networks:
       - stations
     environment:
       - STATION_NUM=2
+      - COUNTRY=AR
       - STATIONS_TOTAL=3
 
   station3:
     build:
       context: .
       dockerfile: station/Dockerfile
+    hostname: station3
     networks:
     - stations
     environment:
     - STATION_NUM=3
+    - COUNTRY=AR
+    - STATIONS_TOTAL=3
+
+  station4:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    hostname: station4
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=1
+      - COUNTRY=RU
+      - STATIONS_TOTAL=3
+
+  station5:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    hostname: station5
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=2
+      - COUNTRY=RU
+      - STATIONS_TOTAL=3
+
+  station6:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    hostname: station6
+    networks:
+    - stations
+    environment:
+    - STATION_NUM=3
+    - COUNTRY=RU
     - STATIONS_TOTAL=3
 
 networks:

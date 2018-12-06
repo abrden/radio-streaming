@@ -5,9 +5,8 @@ logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(thread
 
 from .station import Station
 
-
 def main(args):
-    s = Station(int(os.environ['STATION_NUM']), int(os.environ['STATIONS_TOTAL']))
+    s = Station(int(os.environ['STATION_NUM']), os.environ["COUNTRY"], int(os.environ['STATIONS_TOTAL']))
     try:
         s.start()
     except KeyboardInterrupt:
