@@ -7,7 +7,7 @@ CHUNK = 1024
 
 
 class Transmitter:
-    def __init__(self, country, freq, audio_file_path):
+    def __init__(self, country, freq, audio_file_path, stations_total):
         self.logger = logging.getLogger("Transmitter")
         self.logger.debug("Start with country: %s, frequency: %s, audio: %s", country, freq, audio_file_path)
 
@@ -15,7 +15,7 @@ class Transmitter:
         self.freq = freq
         self.audio_file_path = audio_file_path
         self.logger.debug("Starting middleware")
-        self.mw = TransmitterMiddleware(country, freq)
+        self.mw = TransmitterMiddleware(country, freq, stations_total)
 
     def start(self):
         self.logger.debug("Opening audio file")

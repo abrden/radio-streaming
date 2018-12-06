@@ -1,7 +1,7 @@
 version: "3"
 services:
 
-  station1:
+  station_ar_1:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -9,9 +9,10 @@ services:
       - stations
     environment:
       - STATION_NUM=1
+      - COUNTRY=AR
       - STATIONS_TOTAL=3
 
-  station2:
+  station_ar_2:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -19,9 +20,96 @@ services:
       - stations
     environment:
       - STATION_NUM=2
+      - COUNTRY=AR
       - STATIONS_TOTAL=3
 
-  station3:
+  station_ar_3:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=3
+      - STATIONS_TOTAL=3
+      - COUNTRY=AR
+
+  receiver_ar:
+    build:
+      context: .
+      dockerfile: receiver/Dockerfile
+    depends_on:
+      - station_ar_1
+      - station_ar_2
+      - station_ar_3
+    networks:
+      - stations
+    environment:
+      - COUNTRY=AR
+      - FREQUENCY=100
+      - STATIONS_TOTAL=3
+      - ORIGIN_COUNTRY=AR
+    devices:
+      - /dev/snd:/dev/snd
+
+  receiver_ru:
+    build:
+      context: .
+      dockerfile: receiver/Dockerfile
+    depends_on:
+      - station_ru_1
+      - station_ru_2
+      - station_ru_3
+    networks:
+      - stations
+    environment:
+      - COUNTRY=AR
+      - FREQUENCY=100
+      - STATIONS_TOTAL=3
+      - ORIGIN_COUNTRY=RU
+    devices:
+      - /dev/snd:/dev/snd
+
+  transmitter:
+    build:
+      context: .
+      dockerfile: transmitter/Dockerfile
+    depends_on:
+      - station_ar_1
+      - station_ar_2
+      - station_ar_3
+    networks:
+      - stations
+    environment:
+      - COUNTRY=AR
+      - ORIGIN_COUNTRY=AR
+      - FREQUENCY=100
+      - STATIONS_TOTAL=3
+      - AUDIO_FILE=/transmitter/transmitter/glitch-mob.wav
+
+  station_ru_1:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=1
+      - COUNTRY=RU
+      - STATIONS_TOTAL=3
+
+  station_ru_2:
+    build:
+      context: .
+      dockerfile: station/Dockerfile
+    networks:
+      - stations
+    environment:
+      - STATION_NUM=2
+      - COUNTRY=RU
+      - STATIONS_TOTAL=3
+
+  station_ru_3:
     build:
       context: .
       dockerfile: station/Dockerfile
@@ -29,6 +117,7 @@ services:
     - stations
     environment:
     - STATION_NUM=3
+    - COUNTRY=RU
     - STATIONS_TOTAL=3
 
 networks:

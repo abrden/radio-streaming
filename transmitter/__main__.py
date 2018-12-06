@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(threadName)s: %(message)s")
@@ -10,7 +11,7 @@ AUDIO_FILE_INDEX = 3
 
 
 def main(args):
-    t = Transmitter(args[COUNTRY_INDEX], args[FREQUENCY_INDEX], args[AUDIO_FILE_INDEX])
+    t = Transmitter(os.environ['COUNTRY'], os.environ['FREQUENCY'], os.environ['AUDIO_FILE'], int(os.environ['STATIONS_TOTAL']))
     t.start()
 
 

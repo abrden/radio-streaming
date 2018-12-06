@@ -8,6 +8,7 @@ RUN pip3 install zmq
 WORKDIR /station
 
 COPY ./station /station/station
+COPY ./common /station/common
 
 ENTRYPOINT [ "python3" ]
 

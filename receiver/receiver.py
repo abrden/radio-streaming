@@ -10,14 +10,16 @@ SAMPWIDTH = 2
 
 
 class Receiver:
-    def __init__(self, country, freq):
+    def __init__(self, originCountry, country, freq, stations_total):
         self.logger = logging.getLogger("Receiver")
         self.logger.debug("Start with country: %s, frequency: %s", country, freq)
 
+        self.originCountry = originCountry
         self.country = country
         self.freq = freq
         self.logger.debug("Starting middleware")
-        self.mw = ReceiverMiddleware(country, freq)
+
+        self.mw = ReceiverMiddleware(originCountry, country, freq, stations_total)
 
         self.logger.debug("Setting up audio stream")
         self.p = pyaudio.PyAudio()
