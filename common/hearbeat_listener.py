@@ -5,11 +5,12 @@ import zmq
 
 
 class HeartbeatListener(Process):
-    def __init__(self, host, dead_fun):
+    def __init__(self, host, dead_fun, dead):
         super(HeartbeatListener, self).__init__()
         self.logger = logging.getLogger("HeartbeatListener")
         self.quit = Value('i', 0, lock=True)
         self.dead_fun = dead_fun
+        self.dead = dead
 
         self.host = host
         self.mw = HeartbeatListenerMiddleware()
@@ -25,6 +26,7 @@ class HeartbeatListener(Process):
                 self.logger.info("Station heartbeat received: %r", beat)
             else:
                 self.logger.info("Station is dead. Finding new station's address and reconnecting")
+                self.dead.value = 1
                 host = self.dead_fun()
                 self.mw.reconnect(host)
         self.logger.info("End to heartbeats listening")

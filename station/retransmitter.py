@@ -42,15 +42,15 @@ class RetransmitterMiddleware:
         self.sender.send_multipart([topic, data])
 
     def connect(self):
-        context = zmq.Context()
-        self.receiver = context.socket(zmq.SUB)
+        self.context = zmq.Context()
+        self.receiver = self.context.socket(zmq.SUB)
         self.receiver.setsockopt(zmq.LINGER, -1)
         leader = AskIfLeader(self.country, self.stations_total).find_leader()
         self.logger.info("Leader is %d", leader)
         leader_addr = "tcp://station_" + self.country.lower() + "_" + str(leader)
         
         self.receiver.connect(leader_addr+":6001")
-        self.sender = context.socket(zmq.PUB)
+        self.sender = self.context.socket(zmq.PUB)
         self.sender.setsockopt(zmq.LINGER, -1)
         self.sender.connect("tcp://0.0.0.0:6000")
         
